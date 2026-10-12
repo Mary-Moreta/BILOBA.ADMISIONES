@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BILOBA MAX 1.69</title>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>body{font-family:system-ui;background:#eef0f4;margin:0;padding:8px}.card{max-width:1150px;margin:auto;background:#fff;padding:16px;border-radius:14px}.box{border:2px dashed #222;padding:12px;border-radius:10px;margin:10px 0;background:#fafafa}.box.ok{border-color:#0a7d2e;background:#e8f5e9;border-style:solid}.item{padding:10px;background:#f3f4f6;margin:6px 0;border-radius:8px;border-left:6px solid #111;font-size:13px}.item.firmar{border-left-color:#0a7d2e;background:#e8f5e9;font-weight:bold}.btnG{background:#0a7d2e;width:100%;font-size:20px;padding:18px;color:#fff;border:0;border-radius:10px;font-weight:bold;cursor:pointer;margin-top:10px}.btnS{background:#e5e7eb;color:#111;padding:10px 14px;width:auto;font-size:13px;margin:3px;border:0;border-radius:8px;font-weight:bold;cursor:pointer}.btnS.active{background:#0a7d2e;color:#fff}.canvasWrap{position:relative;border:3px solid #111;border-radius:10px;overflow:auto;background:#525659;min-height:800px;margin-top:10px;display:flex;justify-content:center;padding:10px}#pdfCanvas{background:#fff;box-shadow:0 0 12px #000;display:block}.firmaDrag{position:absolute;cursor:grab;border:2px solid #0a7d2e;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;z-index:30;touch-action:none}.firmaDrag.selected{border:4px solid blue;background:rgba(224,242,255,.7);box-shadow:0 0 0 4px yellow}.firmaDrag img{width:100%;height:100%;object-fit:contain;pointer-events:none;display:block}.panel{background:#eff6ff;border:2px solid #2563eb;padding:12px;border-radius:10px;margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}input[type=text],input[type=password]{padding:14px;border-radius:10px;border:3px solid #0a7d2e;font-size:16px;width:100%;font-weight:bold;box-sizing:border-box}#loginOverlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#111;display:flex;align-items:center;justify-content:center;z-index:9999}.loginBox{background:#fff;padding:30px;border-radius:16px;width:90%;max-width:400px;text-align:center}</style>
+</head><body>
+<div id="loginOverlay"><div class="loginBox"><h2>🔒 BILOBA</h2><input type="text" id="loginUser" placeholder="Usuario"><input type="password" id="loginPass" placeholder="Contraseña"><button id="btnLogin" class="btnG">Entrar</button><div id="loginError" style="color:red;font-weight:bold;margin-top:10px;display:none">Incorrecto</div></div></div>
+<div class="card" id="mainContent" style="display:none">
+<h2 style="margin:0">BILOBA - MAX CALIDAD 1,69 MB</h2>
+<div class="box ok" style="background:#fff8d6;border:3px solid #e6a800"><b>👤 NOMBRE</b><br><br><input type="text" id="nombrePaciente" placeholder="LOPEZ ACOSTA MIQUEAS"><div id="nombrePreview" style="margin-top:8px;padding:8px;background:#e8f5e9;border-radius:6px;font-weight:bold;display:none"></div></div>
+<div class="box ok"><b>📄 1) RESUMEN</b> <input type="file" id="inResumen" accept=".pdf"><div id="stResumen"></div></div>
+<div class="box ok"><b>📄 2) ADMISIÓN</b> <input type="file" id="inAdmision" accept=".pdf"><div id="stAdmision"></div></div>
+<div class="box ok"><b>📄 3) INDICACIÓN</b> <input type="file" id="inIndicacion" accept=".pdf"><div id="stIndicacion"></div></div>
+<div class="box ok"><b>📄 4) PDF 4 PÁGINAS</b> <input type="file" id="in4Pag" accept=".pdf"><div id="st4Pag"></div></div>
+<div style="margin-top:12px;background:#fff;border:2px solid #111;padding:10px;border-radius:10px"><b>📋 ORDEN:</b><div id="ordenTodas"></div><div id="stFijas" style="font-size:12px;margin-top:8px;font-weight:bold"></div></div>
+<div id="avisoHoja" style="padding:12px;border-radius:8px;margin:10px 0;font-weight:bold;text-align:center;background:#d1fae5;border:2px solid #0a7d2e">Máxima calidad posible hasta 1,69 MB - Sin firma automática</div>
+<select id="selDocVisor" style="padding:14px;border-radius:8px;width:100%;font-size:17px;margin-bottom:8px;font-weight:bold;border:3px solid #0a7d2e;background:#e8f5e9"></select>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btnS active" data-f="0">Firma Caprarella</button><button class="btnS" data-f="1">Firma Orellana</button><button class="btnS" data-f="2">Firma Pablo P.</button><button class="btnS" id="btnAddCentro" style="background:#0a7d2e;color:#fff">+ PONER FIRMA</button><button class="btnS" id="btnP4Centro" style="background:#111;color:#fff">📍 P4 manual</button></div>
+<div class="panel"><button class="btnS" id="btnLeft">◀</button><button class="btnS" id="btnRight">▶</button><button class="btnS" id="btnUp">▲</button><button class="btnS" id="btnDown">▼</button><button class="btnS" id="btnChica">- </button><input type="range" id="rangeW" min="20" max="500" value="150" style="width:130px"><button class="btnS" id="btnGrande">+ </button><span id="lblW" style="font-weight:bold;font-size:18px">150px</span><button class="btnS" id="btnBorrarUna" style="background:#dc2626;color:#fff">Borrar firma</button></div>
+<div class="canvasWrap" id="wrap"><canvas id="pdfCanvas"></canvas></div>
+<canvas id="hiddenCanvas" style="display:none"></canvas>
+<div id="status" style="font-size:14px;font-weight:bold;white-space:pre-wrap;margin-top:8px"></div>
+<button id="btnFinal" class="btnG">⬇️ DESCARGAR 1,69 MAX CALIDAD</button>
+</div>
+<script>
+const LOGIN={usuario:"bilobaneuro",password:"sanmartinvergara"};const loginOverlay=document.getElementById('loginOverlay');const mainContent=document.getElementById('mainContent');
+function checkLogin(){if(localStorage.getItem('biloba_auth')==='ok'){loginOverlay.style.display='none';mainContent.style.display='block';}}
+document.getElementById('btnLogin').addEventListener('click',()=>{let u=document.getElementById('loginUser').value.trim();let p=document.getElementById('loginPass').value.trim();if(u===LOGIN.usuario&&p===LOGIN.password){localStorage.setItem('biloba_auth','ok');loginOverlay.style.display='none';mainContent.style.display='block';}else{document.getElementById('loginError').style.display='block';}});checkLogin();
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const NOMBRES={"p1":"1. P1","p2":"2. P2","resumen":"3. RESUMEN","indicacion":"4. INDICACIÓN","admision":"5. ADMISIÓN","planilla3_hoja1":"6. Hoja1","p3":"7. P3","planilla3_hoja3":"8. Hoja3","planilla3_hoja4":"9. Hoja4","p4":"10. P4"};
+const ORDEN=["p1","p2","resumen","indicacion","admision","planilla3_hoja1","p3","planilla3_hoja3","planilla3_hoja4","p4"];
+const SOLO_FIRMAR=["resumen","indicacion","admision","p4"];
+let firmas=[null,null,null];let fijas={planilla3_hoja1:null,planilla3_hoja3:null,planilla3_hoja4:null};
+let dinamicos=[];let posiciones={};let firmaActiva=0;let selectedIdx=null;let scale=1.5;let pageW=0,pageH=0;let firmaRatios=[2.8,2.8,2.8];
+function calcRatios(){firmas.forEach((src,i)=>{if(!src)return;let im=new Image();im.onload=()=>{if(im.width>10&&im.height>10)firmaRatios[i]=im.width/im.height;};im.src=src;});}
+function buf2b64(buf){let b='';let u=new Uint8Array(buf);for(let i=0;i<u.length;i++)b+=String.fromCharCode(u[i]);return btoa(b);}
+function b64ToU8(b64){let bin=atob(b64);let u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u;}
+function saveAll(){localStorage.setItem('posV50',JSON.stringify(posiciones));localStorage.setItem('nombrePacV50',document.getElementById('nombrePaciente').value||'');}
+async function fetchToBase64(url){try{let r=await fetch(encodeURI(url));if(!r.ok)return null;let ab=await r.arrayBuffer();return buf2b64(ab);}catch(e){return null;}}
+async function fetchImg(url){try{let r=await fetch(encodeURI(url));if(!r.ok)return null;let b=await r.blob();return await new Promise(res=>{let fr=new FileReader();fr.onload=e=>res(e.target.result);fr.readAsDataURL(b);});}catch(e){return null;}}
+async function fetchImgTry(lista){for(let u of lista){let img=await fetchImg(u);if(img)return img;}return null;}
+async function fetchPdfTry(lista){for(let u of lista){let b=await fetchToBase64(u);if(b)return b;}return null;}
+async function recortarFirma(dataUrl){return new Promise(res=>{let img=new Image();img.onload=()=>{let c=document.createElement('canvas');c.width=img.width;c.height=img.height;let ctx=c.getContext('2d');ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);let data=ctx.getImageData(0,0,c.width,c.height).data;let minX=c.width,minY=c.height,maxX=0,maxY=0,found=false;for(let y=0;y<c.height;y++){for(let x=0;x<c.width;x++){let i=(y*c.width+x)*4;if(data[i]<235||data[i+1]<235||data[i+2]<235){if(x<minX)minX=x;if(y<minY)minY=y;if(x>maxX)maxX=x;if(y>maxY)maxY=y;found=true;}}}if(!found){res(dataUrl);return;}minX=Math.max(0,minX-6);minY=Math.max(0,minY-6);maxX=Math.min(c.width-1,maxX+6);maxY=Math.min(c.height-1,maxY+6);let cw=maxX-minX+1,ch=maxY-minY+1;let c2=document.createElement('canvas');c2.width=cw;c2.height=ch;let ctx2=c2.getContext('2d');ctx2.fillStyle='#FFFFFF';ctx2.fillRect(0,0,cw,ch);ctx2.drawImage(c,minX,minY,cw,ch,0,0,cw,ch);res(c2.toDataURL('image/png'));};img.onerror=()=>res(dataUrl);img.src=dataUrl;});}
+
+async function comprimirPaginaCalidad(ab,pageIndex,calidad,escala){
+ const pdfjsDoc=await pdfjsLib.getDocument({data:ab.slice(0)}).promise;
+ const page=await pdfjsDoc.getPage(pageIndex+1);
+ const viewport=page.getViewport({scale:escala});
+ const canvas=document.getElementById('hiddenCanvas'); canvas.width=viewport.width; canvas.height=viewport.height;
+ const ctx=canvas.getContext('2d'); ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,canvas.width,canvas.height);
+ await page.render({canvasContext:ctx,viewport:viewport}).promise;
+ const jpgDataUrl=canvas.toDataURL('image/jpeg',calidad);
+ const {PDFDocument}=PDFLib; const newPdf=await PDFDocument.create();
+ const A4_W=595.28,A4_H=841.89; const jpgBytes=await fetch(jpgDataUrl).then(r=>r.arrayBuffer());
+ const jpgImg=await newPdf.embedJpg(jpgBytes); const pageA4=newPdf.addPage([A4_W,A4_H]);
+ const s=Math.min(A4_W/viewport.width*escala,A4_H/viewport.height*escala)*0.98;
+ const w=viewport.width/escala*s; const h=viewport.height/escala*s; const x=(A4_W-w)/2; const y=(A4_H-h)/2;
+ pageA4.drawImage(jpgImg,{x,y,width:w,height:h});
+ return await newPdf.save({useObjectStreams:true});
+}
+async function comprimirPdfCalidad(ab,calidad,escala){
+ const src=await pdfjsLib.getDocument({data:ab.slice(0)}).promise;
+ const {PDFDocument}=PDFLib; const final=await PDFDocument.create();
+ for(let i=0;i<src.numPages;i++){
+  let onePageBytes=await comprimirPaginaCalidad(ab,i,calidad,escala);
+  let doc1=await PDFDocument.load(onePageBytes);
+  let [pg]=await final.copyPages(doc1,[0]); final.addPage(pg);
+ }
+ return await final.save({useObjectStreams:true});
+}
+async function cargarDesdeCarpetas(){posiciones=JSON.parse(localStorage.getItem('posV50')||'{}');fijas.planilla3_hoja1=await fetchPdfTry(['./fijas/Planilla 3 hoja 1.pdf','./fijas/planilla 3 hoja 1.pdf']);fijas.planilla3_hoja3=await fetchPdfTry(['./fijas/planilla 3 hoja 3.pdf','./fijas/Planilla 3 hoja 3.pdf']);fijas.planilla3_hoja4=await fetchPdfTry(['./fijas/planilla 3 hoja 4.pdf','./fijas/Planilla 3 hoja 4.pdf']);let f1=await fetchImgTry(['./firma/firma Caprarella.png','./firma/Firma Caprarella.png','./firma/firma dani.png']);let f2=await fetchImgTry(['./firma/Firma Orellana.jpeg','./firma/firma Orellana.jpeg','./firma/Firma Dr. Orellana.jpeg']);let f3=await fetchImgTry(['./firma/firma Pablo p.png','./firma/firma Pablo P.png','./firma/firma pablo p.png']);if(f1)firmas[0]=await recortarFirma(f1);if(f2)firmas[1]=await recortarFirma(f2);if(f3)firmas[2]=await recortarFirma(f3);calcRatios();renderEstado();let np=localStorage.getItem('nombrePacV50');if(np){document.getElementById('nombrePaciente').value=np;actualizarPreviewNombre();}document.getElementById('stFijas').innerHTML=`Fijas: ${fijas.planilla3_hoja1?'✅ H1 ':'❌ H1 '}${fijas.planilla3_hoja3?'✅ H3 ':'❌ H3 '}${fijas.planilla3_hoja4?'✅ H4 ':'❌ H4 '} | Firmas: ${firmas[0]?'✅':'❌ '}${firmas[1]?'✅':'❌ '}${firmas[2]?'✅':''}`;}
+let currentKey=null;
+function actualizarPreviewNombre(){let n=document.getElementById('nombrePaciente').value.trim();let d=document.getElementById('nombrePreview');if(n){d.style.display='block';d.innerHTML='✅ BILOBA - '+n+'.pdf';document.getElementById('btnFinal').innerText='⬇️ DESCARGAR MAX CALIDAD - '+n;}else{d.style.display='none';}}
+function renderEstado(){let todos=[];for(let k of ORDEN){if(k.startsWith('planilla3')){if(fijas[k])todos.push(k);}else{if(dinamicos.find(d=>d.key===k))todos.push(k);}}dinamicos.filter(d=>/^p\d+$/.test(d.key)&&!todos.includes(d.key)).forEach(d=>todos.push(d.key));document.getElementById('ordenTodas').innerHTML=todos.map(k=>{let esF=SOLO_FIRMAR.includes(k);let cant=(posiciones[k]||[]).length;if(esF)return `<div class="item firmar">${NOMBRES[k]||k} ${cant?` - ${cant} firma OK`: ` - Sin firma`}</div>`;else return `<div class="item nofirma">${NOMBRES[k]||k}</div>`;}).join('')||'Cargá los PDF';let soloFirmar=todos.filter(k=>SOLO_FIRMAR.includes(k));let sel=document.getElementById('selDocVisor');let cur=sel.value;sel.innerHTML=soloFirmar.map(k=>`<option value="${k}">${NOMBRES[k]||k} ${(posiciones[k]||[]).length?` - OK`: ` - Sin firma`}</option>`).join('');if(cur)sel.value=cur;if(soloFirmar.length&&!currentKey){let primera=soloFirmar.find(k=>k!=='p4')||soloFirmar[0];sel.value=primera;currentKey=primera;loadVisor(primera);}window._todos=todos;}
+async function loadVisor(key){if(!key)return;currentKey=key;let by=null;if(fijas[key])by=b64ToU8(fijas[key]);else{let d=dinamicos.find(x=>x.key===key);if(!d)return;by=(d.bytes?new Uint8Array(d.bytes):b64ToU8(d.b64));}let byCopy=by.slice().buffer;try{let pdf=await pdfjsLib.getDocument({data:byCopy}).promise;let page=await pdf.getPage(pdf.numPages);let vp=page.getViewport({scale:1.5});scale=1.5;pageW=vp.width/scale;pageH=vp.height/scale;let cv=document.getElementById('pdfCanvas');let ctx=cv.getContext('2d');cv.width=vp.width;cv.height=vp.height;await page.render({canvasContext:ctx,viewport:vp}).promise;document.querySelectorAll('.firmaDrag').forEach(e=>e.remove());(posiciones[key]||[]).forEach((pos,idx)=>{if(!firmas[pos.firmaIdx])return;let rx=pos.rx,ry=pos.ry,rw=pos.rw;let ratio=firmaRatios[pos.firmaIdx]||2.8;let w=rw*pageW;let h=w/ratio;let x=rx*pageW;let y=ry*pageH;let div=document.createElement('div');div.className='firmaDrag'+(selectedIdx===idx?' selected':'');div.style.left=(x*scale)+'px';div.style.top=((pageH-y-h)*scale)+'px';div.style.width=(w*scale)+'px';div.style.height=(h*scale)+'px';let img=document.createElement('img');img.src=firmas[pos.firmaIdx];div.appendChild(img);document.getElementById('wrap').appendChild(div);makeDraggable(div,key,idx);});document.getElementById('avisoHoja').innerText='Editando: '+(NOMBRES[key]||key);}catch(e){}}
+function makeDraggable(el,key,idx){let sx,sy,ox,oy,moved=false;function mv(e){let cx=e.touches?e.touches[0].clientX:e.clientX;let cy=e.touches?e.touches[0].clientY:e.clientY;let dx=cx-sx;let dy=cy-sy;if(Math.abs(dx)>2||Math.abs(dy)>2)moved=true;el.style.left=(ox+dx)+'px';el.style.top=(oy+dy)+'px';}function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);document.removeEventListener('touchmove',mv);document.removeEventListener('touchend',up);if(moved){let pos=posiciones[key][idx];let top=parseFloat(el.style.top)/scale;let left=parseFloat(el.style.left)/scale;let w=parseFloat(el.style.width)/scale;pos.rx=left/pageW;pos.ry=(pageH-top-(w/(firmaRatios[pos.firmaIdx]||2.8)))/pageH;pos.rw=w/pageW;saveAll();renderEstado();}else{selectedIdx=idx;loadVisor(key);}}function down(e){e.preventDefault();e.stopPropagation();moved=false;let cx=e.touches?e.touches[0].clientX:e.clientX;let cy=e.touches?e.touches[0].clientY:e.clientY;sx=cx;sy=cy;ox=parseFloat(el.style.left);oy=parseFloat(el.style.top);document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);document.addEventListener('touchmove',mv,{passive:false});document.addEventListener('touchend',up);}el.addEventListener('mousedown',down);el.addEventListener('touchstart',down,{passive:false});el.addEventListener('dblclick',()=>{posiciones[key].splice(idx,1);selectedIdx=null;saveAll();loadVisor(key);renderEstado();});}
+function addFirmaCentro(){if(!currentKey)return;if(!firmas[firmaActiva]){alert('Firma no cargada');return;}let w=parseInt(document.getElementById('rangeW').value);let x=(pageW/2)-(w/2);let y=(pageH/2)-(w/2.8/2);if(!posiciones[currentKey])posiciones[currentKey]=[];posiciones[currentKey].push({firmaIdx:firmaActiva,rx:x/pageW,ry:y/pageH,rw:w/pageW});selectedIdx=posiciones[currentKey].length-1;saveAll();renderEstado();loadVisor(currentKey);}
+function ponerP4Manual(){if(!posiciones['p4'])posiciones['p4']=[];posiciones['p4'].push({firmaIdx:2,rx:0.055,ry:0.088,rw:0.32});currentKey='p4';document.getElementById('selDocVisor').value='p4';saveAll();renderEstado();selectedIdx=posiciones['p4'].length-1;loadVisor('p4');}
+document.getElementById('btnAddCentro').addEventListener('click',addFirmaCentro);
+document.getElementById('btnP4Centro').addEventListener('click',ponerP4Manual);
+document.getElementById('btnLeft').addEventListener('click',()=>{if(selectedIdx===null)return;posiciones[currentKey][selectedIdx].rx-=0.005;saveAll();loadVisor(currentKey);});
+document.getElementById('btnRight').addEventListener('click',()=>{if(selectedIdx===null)return;posiciones[currentKey][selectedIdx].rx+=0.005;saveAll();loadVisor(currentKey);});
+document.getElementById('btnUp').addEventListener('click',()=>{if(selectedIdx===null)return;posiciones[currentKey][selectedIdx].ry+=0.005;saveAll();loadVisor(currentKey);});
+document.getElementById('btnDown').addEventListener('click',()=>{if(selectedIdx===null)return;posiciones[currentKey][selectedIdx].ry-=0.005;saveAll();loadVisor(currentKey);});
+document.getElementById('pdfCanvas').addEventListener('click',e=>{if(!currentKey||e.target!==document.getElementById('pdfCanvas'))return;let w=parseInt(document.getElementById('rangeW').value);let rect=e.target.getBoundingClientRect();let x=(e.clientX-rect.left)/scale;let yTop=(e.clientY-rect.top)/scale;let y=pageH-yTop-w/2.8;if(!posiciones[currentKey])posiciones[currentKey]=[];let left=x-w/2;posiciones[currentKey].push({firmaIdx:firmaActiva,rx:left/pageW,ry:y/pageH,rw:w/pageW});selectedIdx=posiciones[currentKey].length-1;saveAll();renderEstado();loadVisor(currentKey);});
+document.querySelectorAll('[data-f]').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('[data-f]').forEach(x=>x.classList.remove('active'));b.classList.add('active');firmaActiva=parseInt(b.dataset.f);});});
+document.getElementById('selDocVisor').addEventListener('change',e=>{selectedIdx=null;currentKey=e.target.value;loadVisor(e.target.value);});
+document.getElementById('btnBorrarUna').addEventListener('click',()=>{if(selectedIdx===null||!currentKey){alert('Tocá la firma primero');return;}posiciones[currentKey].splice(selectedIdx,1);selectedIdx=null;saveAll();loadVisor(currentKey);renderEstado();});
+function actualizarTamano(){let v=parseInt(document.getElementById('rangeW').value);document.getElementById('lblW').innerText=v+'px';if(selectedIdx!==null&&currentKey&&posiciones[currentKey]&&posiciones[currentKey][selectedIdx]){let pos=posiciones[currentKey][selectedIdx];pos.rw=v/pageW;let divs=document.querySelectorAll('.firmaDrag');if(divs[selectedIdx]){let ratio=firmaRatios[pos.firmaIdx]||2.8;divs[selectedIdx].style.width=(v*scale)+'px';divs[selectedIdx].style.height=((v/ratio)*scale)+'px';}}}
+document.getElementById('rangeW').addEventListener('input',actualizarTamano);
+document.getElementById('rangeW').addEventListener('change',()=>{saveAll();renderEstado();});
+document.getElementById('btnGrande').addEventListener('click',()=>{let r=document.getElementById('rangeW');r.value=Math.min(500,parseInt(r.value)+15);actualizarTamano();saveAll();});
+document.getElementById('btnChica').addEventListener('click',()=>{let r=document.getElementById('rangeW');r.value=Math.max(20,parseInt(r.value)-15);actualizarTamano();saveAll();});
+async function cargarUno(file,key,statusId){
+ document.getElementById(statusId).innerText='⏳ Guardando original...';
+ let ab=await file.arrayBuffer();
+ let by=new Uint8Array(ab);
+ dinamicos=dinamicos.filter(d=>d.key!==key);
+ dinamicos.push({key,bytes:by,b64:buf2b64(by),nombre:file.name,original:ab});
+ document.getElementById(statusId).innerText='✅ '+file.name+' -> original guardado';
+ currentKey=null;renderEstado();saveAll();
+}
+document.getElementById('inResumen').addEventListener('change',e=>{if(e.target.files[0])cargarUno(e.target.files[0],'resumen','stResumen');});
+document.getElementById('inAdmision').addEventListener('change',e=>{if(e.target.files[0])cargarUno(e.target.files[0],'admision','stAdmision');});
+document.getElementById('inIndicacion').addEventListener('change',e=>{if(e.target.files[0])cargarUno(e.target.files[0],'indicacion','stIndicacion');});
+document.getElementById('in4Pag').addEventListener('change',async e=>{
+let file=e.target.files[0];if(!file)return;document.getElementById('st4Pag').innerText='⏳ Cargando 4 pag original...';let ab=await file.arrayBuffer();const src=await PDFLib.PDFDocument.load(ab);dinamicos=dinamicos.filter(d=>!/^p\d+$/.test(d.key));
+for(let i=0;i<src.getPageCount();i++){ let single=await PDFLib.PDFDocument.create(); let [pg]=await single.copyPages(src,[i]); single.addPage(pg); let bytes=await single.save(); dinamicos.push({key:`p${i+1}`,bytes:new Uint8Array(bytes),b64:buf2b64(bytes),nombre:`P${i+1}`,originalPage:ab,pageIndex:i});}
+document.getElementById('st4Pag').innerText='✅ '+file.name+' -> 4 pags originales'; currentKey=null;renderEstado();saveAll();
+});
+document.getElementById('nombrePaciente').addEventListener('input',()=>{actualizarPreviewNombre();saveAll();});
+
+// DESCARGA INTELIGENTE HASTA 1,69MB CON MAX CALIDAD
+document.getElementById('btnFinal').addEventListener('click',async()=>{
+let nombre=document.getElementById('nombrePaciente').value.trim();if(!nombre){alert('Escribí el nombre');return;}if(!window._todos||window._todos.length<3){alert('Cargá los PDF');return;}
+const calidades=[0.90,0.85,0.80,0.75,0.70,0.65,0.60]; const escalas=[2.0,1.8,1.6,1.5,1.4,1.3,1.2];
+for(let intento=0;intento<calidades.length;intento++){
+ let calidad=calidades[intento]; let escala=escalas[intento];
+ document.getElementById('status').innerText='⏳ Probando calidad '+(calidad*100).toFixed(0)+'% para llegar a 1,69MB... intento '+(intento+1)+'/'+calidades.length;
+ const final=await PDFLib.PDFDocument.create();
+ for(let k of window._todos){
+  let d=dinamicos.find(x=>x.key===k); let by=null;
+  if(fijas[k]){ by=b64ToU8(fijas[k]); }
+  else if(d){
+   let orig = d.original || d.originalPage? (d.originalPage||d.original) : d.bytes.buffer;
+   let pageIdx = d.pageIndex!=null?d.pageIndex:0;
+   let isSingle = d.pageIndex!=null;
+   let comp = isSingle? await comprimirPaginaCalidad(orig,pageIdx,calidad,escala) : await comprimirPdfCalidad(orig,calidad,escala);
+   by=new Uint8Array(comp);
+  }
+  if(!by)continue;
+  let src=await PDFLib.PDFDocument.load(by.buffer);
+  let pg=src.getPages()[src.getPageCount()-1];
+  let{width:pw,height:ph}=pg.getSize();
+  for(let pos of(posiciones[k]||[])){if(!firmas[pos.firmaIdx])continue;try{let b=await fetch(firmas[pos.firmaIdx]).then(r=>r.arrayBuffer());let im=await src.embedPng(b);let ratio=firmaRatios[pos.firmaIdx]||2.8;let wFinal=pos.rw*pw;let hFinal=wFinal/ratio;let xFinal=pos.rx*pw;let yFinal=pos.ry*ph;pg.drawImage(im,{x:xFinal,y:yFinal,width:wFinal,height:hFinal});}catch(e){}}
+  let sv=await src.save({useObjectStreams:true}); let s2=await PDFLib.PDFDocument.load(sv); let pages=await final.copyPages(s2,s2.getPageIndices()); pages.forEach(p=>final.addPage(p));
+ }
+ let out=await final.save({useObjectStreams:true}); let sizeMB=out.length/1024/1024;
+ if(sizeMB<=1.69){
+  let blob=new Blob([out],{type:'application/pdf'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='BILOBA - '+nombre+'.pdf';a.click();
+  document.getElementById('status').innerText='✅ LISTO: '+sizeMB.toFixed(2)+' MB con CALIDAD '+ (calidad*100).toFixed(0)+'% (MAX posible bajo 1,69MB)'; saveAll(); return;
+ }
+ if(intento===calidades.length-1){
+  let blob=new Blob([out],{type:'application/pdf'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='BILOBA - '+nombre+'.pdf';a.click();
+  document.getElementById('status').innerText='✅ LISTO: '+sizeMB.toFixed(2)+' MB - Calidad minima '+ (calidad*100).toFixed(0)+'%'; saveAll();
+ }
+}
+});
+cargarDesdeCarpetas();
+</script></body></html>
