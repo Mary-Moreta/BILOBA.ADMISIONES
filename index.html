@@ -101,7 +101,7 @@ checkLogin();
 
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 const NOMBRES={"p1":"1. P1","p2":"2. P2","resumen":"3. RESUMEN","indicacion":"4. INDICACIÓN","admision":"5. ADMISIÓN","planilla3_hoja1":"6. Hoja1","p3":"7. P3","planilla3_hoja3":"8. Hoja3","planilla3_hoja4":"9. Hoja4","p4":"10. P4"};
-const ORDEN=["p1","p2","resumen","indicacion","admision","planilla3_hoja1","p3","planilla3_hoja4","p4"];
+const ORDEN=["p1","p2","resumen","indicacion","admision","planilla3_hoja1","p3", "planilla3_hoja3", "planilla3_hoja4","p4"];
 const SOLO_FIRMAR=["resumen","indicacion","admision","p4"];
 let firmas=[null,null,null];let fijas={planilla3_hoja1:null,planilla3_hoja3:null,planilla3_hoja4:null};
 let dinamicos=[];let posiciones={};let firmaActiva=0;let selectedIdx=null;
@@ -295,9 +295,9 @@ document.getElementById('in4Pag').addEventListener('change',async e=>{
       dinamicos.push({key:`p${i+1}`,bytes:by,b64:buf2b64(by),nombre:`P${i+1}`});
     }
   }
-  document.getElementById('st4Pag').innerText='✅ '+file.name;
-  ponerP4Centro();
-  currentKey=null;renderEstado();saveAll();
+   document.getElementById('st4Pag').innerText='✅ '+file.name;
+  // ponerP4Centro(); <-- así lo desactivás
+  currentKey=null;renderEstado();saveAll();}
   let primera = window._todos.find(k=>SOLO_FIRMAR.includes(k) && k!=='p4');
   if(primera){document.getElementById('selDocVisor').value=primera;currentKey=primera;await loadVisor(primera);}
 });
